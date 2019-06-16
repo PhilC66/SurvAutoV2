@@ -1,0 +1,33 @@
+Bug Blocage Alarme Autorail
+
+Description 
+
+Apres une détection alarme et lancement normale message et sirène
+Message fausses Alarmes apparait avant fin de sirène, 
+avant envoie du message de fin alarme.
+Le système continue de voir les Alarmes, messages Fausses alarmes réguliers, 
+message vie avec état alarme et réponse ST avec état alarme
+mais plus jamais de nouveau message alarme ni sirène
+
+Analyse
+FlagPIR retombé à false et FlagAlarmeIntrusion resté à true
+pour raison inconnue
+
+FlagAlarmeIntrusion aurai du retombé à false en fin de tempo siréne ArretSonnerie()
+
+Cause
+messages Fausses Alarmes correspond à la routine MajHeure()
+si lors de cette routine une mise à l'heure est effectivement effectuée (ecart > 5s)
+il y arrêt de toute les tempos dont Sonnerie mais sans effectuer les actions prévues 
+à la fin de la routine ArretSonnerie()
+donc laisse un état correspondant à l'analyse ci-dessus
+FlagPIR passe à false en début de Sirène
+mais FlagAlarmeIntrusion jamais retombé à false en fin de ArretSonnerie()
+
+
+Solution
+
+Avant d'arrêter la tempo Sirène dans la routine MajHeure()
+lancer la routine ArretSonnerie() normalement 
+
+si l'alarme est toujours présente elle se relancera toute seule selon le cycle normal.
