@@ -1,10 +1,10 @@
 /*
-  IDE 1.8.8 ou 1.8.8 portable, AVR boards 1.6.23, PC fixe
-	Le croquis utilise 47056 octets (18%)
+  IDE 1.8.9, AVR boards 1.6.23, PC fixe
+	Le croquis utilise 47074 octets (18%)
 	Les variables globales utilisent 1653 octets (20%) de mémoire dynamique
 	
-	IDE 1.8.8 portable, AVR boards 1.6.21 (bug WXP avec 1.6.23)
-	Le croquis utilise 47464 octets (18%)
+	IDE 1.8.9 Raspi, AVR boards 1.6.23
+	Le croquis utilise 47022 octets (18%)
 	Les variables globales utilisent 1654 octets (20%) de mémoire dynamique
 	
 	Philippe CORBEL
@@ -19,6 +19,8 @@
 	
 	si ??besoin?? activer intruauto dans IntruF() et IntruD() voir PNV2 
 	----------------------------------------------
+	V2-21 24/06/2019
+	Ajout date et heure sur generation message
 	
 	V2-20 25/10/2018 installé testé sur boitier SPARE
 	installé sur X4545 et 4554 le 27/09/2018, sur X4573, X3944 et X4607 le 02/11/2018
@@ -1612,6 +1614,8 @@ void generationMessage() {
   /* Generation du message etat/alarme général */
 
   message = Id ;
+  displayTime(true); // V2-21
+  message += fl;     // V2-21
   if ( FlagAlarmeTension || FlagLastAlarmeTension || FlagAlarmeIntrusion) {
     message += F("--KO--------KO--");
   }
