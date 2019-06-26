@@ -1,7 +1,7 @@
 /*
-  IDE 1.8.9, AVR boards 1.6.23, PC fixe
-	Le croquis utilise 47074 octets (18%)
-	Les variables globales utilisent 1653 octets (20%) de mémoire dynamique
+  IDE 1.8.9, AVR boards 1.6.21, PC fixe
+	Le croquis utilise 47322 octets (18%)
+	Les variables globales utilisent 1652 octets (20%) de mémoire dynamique
 	
 	IDE 1.8.9 Raspi, AVR boards 1.6.23
 	Le croquis utilise 47022 octets (18%)
@@ -13,14 +13,15 @@
 	Telesurveillance Autorail V2
 	----------------------------------------------
 	evolution futur
-	ajouter DateHeure a chaque message
 	Appliquer meme methode lecture nbr ligne PhoneBook avant listing (ESP32_Tunnel)
 	meme remarque que PNV2-1 probleme MAJHEURE(04/2019)
 	
 	si ??besoin?? activer intruauto dans IntruF() et IntruD() voir PNV2 
 	----------------------------------------------
 	V2-21 24/06/2019
-	Ajout date et heure sur generation message
+	1 - Ajout date et heure sur tous les messages
+	2 - suppression resetsim dans majheure
+	3 - Creation message FALARME retourne etat des fausses alarmes meme sans Alarme en cours
 	
 	V2-20 25/10/2018 installé testé sur boitier SPARE
 	installé sur X4545 et 4554 le 27/09/2018, sur X4573, X3944 et X4607 le 02/11/2018
@@ -145,7 +146,7 @@ boolean newData = false;
 String 	demande;
 /* test seulement */
 
-String ver = "V2-20";
+String ver = "V2-21";
 
 #include <Adafruit_FONA.h>			// gestion carte GSM Fona SIM800/808
 #include <EEPROM.h>							// variable en EEPROM
@@ -849,7 +850,7 @@ void traite_sms(byte slot) {	// traitement du SMS par slot
     if ((sms && String(nameIDbuffer).length() > 0) || !sms) { // nom appelant existant
       //Envoyer une réponse
       //Serial.println(F("Envoie reponse..."));
-      message = Id;
+      messageId();
       if (!(textesms.indexOf(F("TEL")) == 0 || textesms.indexOf(F("tel")) == 0 || textesms.indexOf(F("Tel")) == 0)) {
         textesms.toUpperCase();		// passe tout en Maj sauf si "TEL"
         textesms.replace(" ", "");	// supp tous les espaces
@@ -943,7 +944,7 @@ void traite_sms(byte slot) {	// traitement du SMS par slot
 fin_tel:
         if (!FlagOK) { // erreur de format
           //Serial.println(F("false"));
-          message = Id ;
+          messageId();
           message += F("Commande non reconnue ?");// non reconnu
           sendSMSReply(callerIDbuffer, sms);						// SMS non reconnu
         }
@@ -953,14 +954,14 @@ fin_tel:
           Alarm.delay(500);
           fona.println(F("AT+CMGF=1"));					//pour purger buffer fona
           Alarm.delay(500);
-          message = Id;
+          messageId();
           message += F("Nouveau Num Tel: ");
           message += F("OK");
           sendSMSReply(callerIDbuffer, sms);
         }
       }
       else if (textesms == F("LST?")) {	//	Liste des Num Tel
-        message = Id;
+        messageId();
         for (byte i = 1; i < 10; i++) {
 					char name[15];
           char num[14];
@@ -977,7 +978,7 @@ fin_tel:
           if ((i % 3) == 0) {
             sendSMSReply(callerIDbuffer, sms);// envoi sur plusieurs SMS
             //Serial.println(message);
-            message = Id;
+            messageId();
           }
         }
 fin_i:
@@ -989,7 +990,7 @@ fin_i:
         sendSMSReply(callerIDbuffer, sms);
       }
       else if (textesms.indexOf(F("SYS")) == 0) {					//	SYS? Etat Systeme
-        message = Id;
+        messageId();
         flushSerial();
         fona.getNetworkName(replybuffer, 15);		// Operateur
         Serial.println(replybuffer);
@@ -1056,7 +1057,7 @@ fin_i:
           Id = String(config.Idchar);
           Id += fl;
         }
-        message = Id;
+        messageId();
         message += F("Nouvel Id");
         sendSMSReply(callerIDbuffer, sms);
       }
@@ -1365,6 +1366,10 @@ fin_i:
 				message += F("(s)");
 				sendSMSReply(callerIDbuffer, sms);
 			}
+			else if (textesms.indexOf(F("FALARME")) == 0){ // fausses alarmes V2-21
+				MessageFaussesAlarmes(false);
+				sendSMSReply(callerIDbuffer, sms);				
+			}
 			else if (textesms.indexOf(F("HINTRU")) == 0 || textesms.indexOf(F("HPARAM")) == 0 ) {		//V2-122	Heures chagement parametre
 				if (textesms.indexOf(char(61)) == 6) {	//	"=" changement heure Intru Auto
 					// Hintru=Hsoir,Hmatin; Hintru=75600,21600
@@ -1499,7 +1504,7 @@ fin_i:
       }
 			else if (textesms.indexOf(F("MAJHEURE")) == 0) {	//	forcer mise a l'heure V2-19
 				message += F("Mise a l'heure");
-				ResetSIM800();	// reset soft SIM800
+				// ResetSIM800();	// reset soft SIM800
 				MajHeure();			// mise a l'heure
 				sendSMSReply(callerIDbuffer, sms);
 			}
@@ -1613,9 +1618,7 @@ void envoieGroupeSMS(byte grp) {
 void generationMessage() {
   /* Generation du message etat/alarme général */
 
-  message = Id ;
-  displayTime(true); // V2-21
-  message += fl;     // V2-21
+  messageId();
   if ( FlagAlarmeTension || FlagLastAlarmeTension || FlagAlarmeIntrusion) {
     message += F("--KO--------KO--");
   }
@@ -1819,45 +1822,53 @@ void MajHeure(){
   }
   displayTime(false);
   timesstatus();	
-	MessageFaussesAlarmes();		// V1-15
+	MessageFaussesAlarmes(true);		// V1-15
 	AIntru_HeureActuelle(); 		// armement selon l'heure	V2-122
 }
 //---------------------------------------------------------------------------
-void MessageFaussesAlarmes(){	
+void MessageFaussesAlarmes(bool sms){
+	// sms = true envoie du sms et RAZ V2-21
+	// sms = false creation du message sans RAZ, sms sera envoyé par procedure appelante
 	// V1-12 - V1-13
+	messageId();
 	if (FausseAlarme1 > 0 || FausseAlarme2 > 0 || FausseAlarme3 > 0 || FausseAlarme4 > 0){	// Si fausse alarme envoie sms info nbr fausse alarme
-	Serial.print(F("MAJH, Nombre fausse alarmes Motrice  : "));
-	Serial.print(FausseAlarme1),Serial.print(F(", ")),Serial.println(FausseAlarme2);
-	Serial.print(F("MAJH, Nombre fausse alarmes Remorque : "));
-	Serial.print(FausseAlarme3),Serial.print(F(", ")),Serial.println(FausseAlarme4);
-	
-	message 	= Id;
-	message += F("Fausses Alarmes Motrice");
-	message += fl ;
-	message += F("1 =");
-	message += FausseAlarme1;
-	message += F(", 2 =");
-	message += FausseAlarme2;
-	message += fl;
-	message += F("Fausses Alarmes Remorque");
-	message += fl ;
-	message += F("1 =");				// V2-11
-	message += FausseAlarme3;
-	message += F(", 2 =");			// V2-11
-	message += FausseAlarme4;
-	byte Index = 1;
-	fona.getPhoneBookNumber(Index, Telbuff, 13);
-	sendSMSReply(Telbuff,true);
-	Index = 2;
-	if (fona.getPhoneBookNumber(Index, Telbuff, 13)) { // lire Phone Book si index present
-		fona.getPhoneBookNumber(Index, Telbuff, 13); 
-		sendSMSReply(Telbuff,true);
+		Serial.print(F("MAJH, Nombre fausse alarmes Motrice  : "));
+		Serial.print(FausseAlarme1),Serial.print(F(", ")),Serial.println(FausseAlarme2);
+		Serial.print(F("MAJH, Nombre fausse alarmes Remorque : "));
+		Serial.print(FausseAlarme3),Serial.print(F(", ")),Serial.println(FausseAlarme4);
+		
+		message += F("Fausses Alarmes Motrice");
+		message += fl ;
+		message += F("1 =");
+		message += FausseAlarme1;
+		message += F(", 2 =");
+		message += FausseAlarme2;
+		message += fl;
+		message += F("Fausses Alarmes Remorque");
+		message += fl ;
+		message += F("1 =");				// V2-11
+		message += FausseAlarme3;
+		
+		message += F(", 2 =");			// V2-11
+		message += FausseAlarme4;
+		if(sms){
+			byte Index = 1;
+			fona.getPhoneBookNumber(Index, Telbuff, 13);
+			sendSMSReply(Telbuff,true);
+			Index = 2;
+			if (fona.getPhoneBookNumber(Index, Telbuff, 13)) { // lire Phone Book si index present
+				fona.getPhoneBookNumber(Index, Telbuff, 13); 
+				sendSMSReply(Telbuff,true);
+			}
+			FausseAlarme1 = 0;
+			FausseAlarme2 = 0;
+			FausseAlarme3 = 0;
+			FausseAlarme4 = 0;
+		}
 	}
-	FausseAlarme1 = 0;
-	FausseAlarme2 = 0;
-	FausseAlarme3 = 0;
-	FausseAlarme4 = 0;
-	}	
+	else{
+		message += F("Pas de fausses Alarmes");
+	}
 	// V1-12 - V1-13
 }
 //---------------------------------------------------------------------------
@@ -2372,6 +2383,12 @@ int Battpct(long vbat){
 		EtatBat = 0;
 	}
 	return EtatBat;
+}
+//--------------------------------------------------------------------------------//
+void messageId(){  // V2-21
+	message = Id;
+  displayTime(true); // V2-21
+  message += fl;     // V2-21
 }
 //--------------------------------------------------------------------------------//
 void ResetSIM800(){ // V2-19
