@@ -3,9 +3,9 @@
 	Le croquis utilise 47322 octets (18%)
 	Les variables globales utilisent 1652 octets (20%) de mémoire dynamique
 	
-	IDE 1.8.9 Raspi, AVR boards 1.6.23
-	Le croquis utilise 47022 octets (18%)
-	Les variables globales utilisent 1654 octets (20%) de mémoire dynamique
+	IDE 1.8.9 Raspi, AVR boards 1.6.21
+	Le croquis utilise 47642 octets (18%)
+	Les variables globales utilisent 1652 octets (20%) de mémoire dynamique
 	
 	Philippe CORBEL
 	07/12/2017
