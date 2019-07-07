@@ -982,7 +982,7 @@ fin_tel:
           }
         }
 fin_i:
-        if (message.length() > Id.length())sendSMSReply(callerIDbuffer, sms); // SMS final (V1.1)
+        if (message.length() > Id.length()+20)sendSMSReply(callerIDbuffer, sms); // SMS final (V1.1)
         //Serial.println(message);
       }
       else if (textesms.indexOf(F("ETAT")) == 0 || textesms.indexOf(F("ST")) == 0) {			// "ETAT? de l'installation"
