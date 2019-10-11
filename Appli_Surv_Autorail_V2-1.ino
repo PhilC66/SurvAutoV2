@@ -1,11 +1,12 @@
 /*
-  IDE 1.8.9, AVR boards 1.6.21, PC fixe
-	Le croquis utilise 47322 octets (18%)
-	Les variables globales utilisent 1652 octets (20%) de mémoire dynamique
+  11/10/2019
+  IDE 1.8.10, AVR boards 1.8.1, PC fixe
+	Le croquis utilise 46640 octets (18%)
+	Les variables globales utilisent 1649 octets (20%) de mémoire dynamique
 	
-	IDE 1.8.9 Raspi, AVR boards 1.6.21
-	Le croquis utilise 47642 octets (18%)
-	Les variables globales utilisent 1652 octets (20%) de mémoire dynamique
+	IDE 1.8.10 Raspi, AVR boards 1.8.1
+	Le croquis utilise 47630 octets (18%)
+	Les variables globales utilisent 1649 octets (20%) de mémoire dynamique
 	
 	Philippe CORBEL
 	07/12/2017
@@ -18,7 +19,7 @@
 	
 	si ??besoin?? activer intruauto dans IntruF() et IntruD() voir PNV2 
 	----------------------------------------------
-	V2-21 24/06/2019
+	V2-21 24/06/2019 installé 02/07/2019 X4545,4573,4607,3944, 22/07/2019 X4554
 	1 - Ajout date et heure sur tous les messages
 	2 - suppression resetsim dans majheure
 	3 - Creation message FALARME retourne etat des fausses alarmes meme sans Alarme en cours
