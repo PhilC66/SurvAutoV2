@@ -1,8 +1,8 @@
 /*
   11/10/2019
   IDE 1.8.10, AVR boards 1.8.1, PC fixe
-	Le croquis utilise 46640 octets (18%)
-	Les variables globales utilisent 1649 octets (20%) de mémoire dynamique
+	Le croquis utilise 46984 octets (18%)
+	Les variables globales utilisent 1653 octets (20%) de mémoire dynamique
 	
 	IDE 1.8.10 Raspi, AVR boards 1.8.1
 	Le croquis utilise 47630 octets (18%)
@@ -15,11 +15,13 @@
 	----------------------------------------------
 	evolution futur
 	Appliquer meme methode lecture nbr ligne PhoneBook avant listing (ESP32_Tunnel)
-	meme remarque que PNV2-1 probleme MAJHEURE(04/2019)
-	
+
 	si ??besoin?? activer intruauto dans IntruF() et IntruD() voir PNV2 
 	----------------------------------------------
-	V2-21 24/06/2019 installé 02/07/2019 X4545,4573,4607,3944, 22/07/2019 X4554
+	V2-22 19/11/2019 pas encore installé
+  1 - modification sms MAJHEURE idem PNV2-1
+
+  V2-21 24/06/2019 installé 02/07/2019 X4545,4573,4607,3944, 22/07/2019 X4554
 	1 - Ajout date et heure sur tous les messages
 	2 - suppression resetsim dans majheure
 	3 - Creation message FALARME retourne etat des fausses alarmes meme sans Alarme en cours
@@ -147,7 +149,7 @@ boolean newData = false;
 String 	demande;
 /* test seulement */
 
-String ver = "V2-21";
+String ver = "V2-22";
 
 #include <Adafruit_FONA.h>			// gestion carte GSM Fona SIM800/808
 #include <EEPROM.h>							// variable en EEPROM
@@ -1504,10 +1506,18 @@ fin_i:
         sendSMSReply(callerIDbuffer, sms);
       }
 			else if (textesms.indexOf(F("MAJHEURE")) == 0) {	//	forcer mise a l'heure V2-19
-				message += F("Mise a l'heure");
-				// ResetSIM800();	// reset soft SIM800
-				MajHeure();			// mise a l'heure
-				sendSMSReply(callerIDbuffer, sms);
+				char datebuffer[21];
+        fona.getSMSdate(slot, datebuffer, 20);
+        String mytime = String(datebuffer).substring(0,20);
+        // Serial.print(F("heure du sms:")),Serial.println(mytime);
+        String _temp = F("AT+CCLK=\"");
+        _temp += mytime + "\"\r\n";
+        // Serial.print(_temp);
+        fona.print(_temp);;// mise a l'heure SIM800
+        Alarm.delay(100);
+        MajHeure();			// mise a l'heure
+
+        sendSMSReply(callerIDbuffer, sms);
 			}
       else if (textesms.indexOf(F("POSITION")) == 0) {	// demande position
         // on lance la demande au GPS
