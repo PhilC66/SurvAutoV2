@@ -1,12 +1,12 @@
 /*
   11/10/2019
   IDE 1.8.10, AVR boards 1.8.1, PC fixe
-	Le croquis utilise 46984 octets (18%)
+	Le croquis utilise 47022 octets (18%)
 	Les variables globales utilisent 1653 octets (20%) de mémoire dynamique
 	
 	IDE 1.8.10 Raspi, AVR boards 1.8.1
-	Le croquis utilise 47630 octets (18%)
-	Les variables globales utilisent 1649 octets (20%) de mémoire dynamique
+	Le croquis utilise 46990 octets (18%)
+	Les variables globales utilisent 1653 octets (20%) de mémoire dynamique
 	
 	Philippe CORBEL
 	07/12/2017
@@ -1506,17 +1506,21 @@ fin_i:
         sendSMSReply(callerIDbuffer, sms);
       }
 			else if (textesms.indexOf(F("MAJHEURE")) == 0) {	//	forcer mise a l'heure V2-19
-				char datebuffer[21];
-        fona.getSMSdate(slot, datebuffer, 20);
-        String mytime = String(datebuffer).substring(0,20);
-        // Serial.print(F("heure du sms:")),Serial.println(mytime);
-        String _temp = F("AT+CCLK=\"");
-        _temp += mytime + "\"\r\n";
-        // Serial.print(_temp);
-        fona.print(_temp);;// mise a l'heure SIM800
-        Alarm.delay(100);
-        MajHeure();			// mise a l'heure
-
+				if(sms){
+          char datebuffer[21];
+          fona.getSMSdate(slot, datebuffer, 20);
+          String mytime = String(datebuffer).substring(0,20);
+          // Serial.print(F("heure du sms:")),Serial.println(mytime);
+          String _temp = F("AT+CCLK=\"");
+          _temp += mytime + "\"\r\n";
+          // Serial.print(_temp);
+          fona.print(_temp);// mise a l'heure SIM800
+          Alarm.delay(100);
+          MajHeure();			// mise a l'heure
+        }
+        else{
+          message += F("pas de mise à l'heure en local");
+        }
         sendSMSReply(callerIDbuffer, sms);
 			}
       else if (textesms.indexOf(F("POSITION")) == 0) {	// demande position
